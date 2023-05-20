@@ -1,0 +1,78 @@
+# Divvy_Bike_Sharing_Platform
+
+select * from divvy_tripdata_202301 limit 10;
+select * from divvy_trips_2020_q1 limit 10 ;
+-- 1) How many total trips were taken in the Q1 2020, Jan'20 & Jan'23?
+-- For Q1 2020
+select count(*) as Q1_2020
+from divvy_trips_2020_q1;
+-- For Jan_20
+select count(*) as jan_2020
+from divvy_trips_2020_q1
+where started_at >= '2020-01-01' and started_at < '2020-02-01';
+-- For Jan_23
+select count(*) as Jan_23
+from divvy_tripdata_202301;
+
+-- 2)what was the avg trip duration in minutes jan_20 and jan_23
+-- jan_20
+select avg(extract(epoch from (ended_at - started_at))/60) as avg_trip_duration_min
+from divvy_trips_2020_q1
+where started_at >= '2020-01-01' and started_at < '2020-02-01';
+-- jan_23
+select avg(extract(epoch from (ended_at - started_at))/60) avg_trip_duration_min
+from divvy_tripdata_202301;
+
+-- 3) what was the most common trip route (start station to end station) in Q1_20
+select start_station_name, start_station_id, end_station_name, end_station_id, count(*) as trip_count
+from divvy_trips_2020_q1
+group by start_station_name, start_station_id, end_station_name, end_station_id
+order by trip_count desc
+limit 10;
+
+-- 4) What was the total no. of trips for each bike (identified by bike_id) in jan_23
+select rideable_type, count(ride_id) as trip_count
+from divvy_tripdata_202301
+group by rideable_type
+order by trip_count desc;
+
+-- 5) How many trips were taken on weekdays vs weekends in jan_23
+select
+	case when extract(isodow from started_at) between 1 and 5 then 'Weekday'
+	else 'Weekend'
+	end as day_type, count(*) as trip_count
+	from divvy_tripdata_202301
+group by day_type
+order by trip_count desc; 
+--5-The ISO 8601(isodow) standard defines Monday as the first day of the week (designated as 1) and Sunday as the seventh day (designated as 7).
+
+
+-- 6) What are the busiest hour of the day in terms of trip volume on 1_jan_2023
+select
+	extract(hour from started_at) as hour_of_day,
+	count(*) as trip_count
+from divvy_tripdata_202301
+group by hour_of_day
+order by trip_count desc
+limit 1;
+
+-- 7) What was the avg trip duration for trips that started and ended at the same station in jan_23
+select avg(extract(epoch from (ended_at - started_at))/60) avg_trip_duration_min
+from divvy_tripdata_202301
+
+SELECT AVG(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) AS average_trip_duration_minutes
+FROM divvy_trips_2020_q1 -- Replace this table name with the appropriate table for your analysis
+WHERE start_station_id = end_station_id;
+		
+-- 8) count the different Types of members and their rides
+select member_casual, rideable_type, count(*) from divvy_tripdata_202301
+group by member_casual, rideable_type;
+
+-- 9) How many rides have been complete in every month
+select 
+	extract( Month from started_at ) as diff_month
+	, count(*) as trip_count
+	from divvy_trips_2020_q1
+group by diff_month;
+
+

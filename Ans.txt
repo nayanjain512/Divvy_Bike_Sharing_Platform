@@ -75,4 +75,53 @@ select
 	from divvy_trips_2020_q1
 group by diff_month;
 
+-- Aim: Finding Anomalies in Trips Data
+-- 1. Does Jan’23 data have any null values, if yes which columns?
+select * from divvy_tripdata_202301
+where (start_station_name is null) and (start_station_id is null); --start station name has 26721 null values
+select * from divvy_tripdata_202301
+where end_station_name is null; --end station name has 27840 null values
+
+-- 2. How many trips have either start_station_name or end_station_name missing?
+select * from divvy_tripdata_202301
+where (start_station_name is null) and (end_station_name is null);
+-- in 12544 trips 
+
+-- 3. How many trips have both start_station_name and end_station_name missing?
+select * from divvy_tripdata_202301
+where (start_station_name is null) and (end_station_name is null);
+
+-- 4. Are these null trips specific to any member type or bike type?
+select rideable_type, count (*) from divvy_tripdata_202301
+where start_station_name is null and end_station_name is null
+group by 1;
+select member_casual, count(*) from divvy_tripdata_202301
+where start_station_name is null and end_station_name is null
+group by 1;
+
+-- 5. Create a categorical variable for tagging missing 
+select *,
+case when start_station_name is null and end_station_name is not null then 'A_start_station_NA'
+when start_station_name is not null and end_station_name is null then 'B_end_station_NA'
+when start_station_name is null and end_station_name is null then 'C_start_end_station_NA'
+when start_station_name is not null and end_station_name is not null then 'D_start_end_station_available'
+else 'others'
+end as station_NA_tags
+from divvy_tripdata_202301;
+
+-- 6. What is the average trip time for these trip categories created above
+select 
+case when start_station_name is null and end_station_name is not null then 'A_start_station_NA'
+when start_station_name is not null and end_station_name is null then 'B_end_station_NA'
+when start_station_name is null and end_station_name is null then 'C_start_end_station_NA'
+when start_station_name is not null and end_station_name is not null then 'D_start_end_station_available'
+else 'others'
+end as station_NA_tags,
+count(*), avg(extract(epoch from (ended_at - started_at))/60) as avg_trip_duration_min
+from divvy_tripdata_202301
+group by station_NA_tags
+order by station_NA_tags;
+
+
+
 
